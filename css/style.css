@@ -1,0 +1,8 @@
+html, body {
+	overflow: visible; 
+}
+
+#json_string{
+	resize: none;
+	max-height: 200px;
+}

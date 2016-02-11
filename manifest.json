@@ -1,0 +1,15 @@
+{
+    "manifest_version": 2,
+
+    "name": "Json Parser",
+    "description": "Convert any Json string to Java classes",
+    "version": "1.0",
+    "icons": {
+    },
+    "app": {
+    "background": {
+            "scripts": ["background.js"]
+        }
+    },
+    "permissions": ["fullscreen"]
+}
