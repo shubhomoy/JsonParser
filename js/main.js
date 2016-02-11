@@ -93,6 +93,7 @@ window.onload = function() {
 				var state = 0;
 				var j;
 				var isNum = false;	// check whether the string is number or null
+				var error = false;
 				for(j=i; j<inputString.length; j++) {
 					switch(state) {
 						case 0:
@@ -107,21 +108,21 @@ window.onload = function() {
 							if(inputString[j] == 'u' || inputString[j] == 'U') {
 								state = 2;
 							}else{
-								state = 0;
+								state = 5;
 							}
 							break;
 						case 2:
 							if(inputString[j] == 'l' || inputString[j] == 'L') {
 								state = 3;
 							}else{
-								state = 0;
+								state = 5;
 							}
 							break;
 						case 3:
 							if(inputString[j] == 'l' || inputString[j] == 'L') {
 								state = 4;
 							}else{
-								state = 0;
+								state = 5;
 							}
 							break;
 						case 4:
@@ -139,9 +140,17 @@ window.onload = function() {
 								break;
 							}
 							break;
-					}
-					if(!attrProcessed || isNum)
+						case 5: 	// trap state
+							error = true;
+							break;
+ 					}
+					if(!attrProcessed || isNum || error)	// number or null or error is identified so break from the loop
 						break;
+				}
+				if(error) {
+					$('#error_json').show();
+					classes = [];
+					return;
 				}
 				if(isNum) {
 					var dataType = 'int';
@@ -163,10 +172,11 @@ window.onload = function() {
 					attrStart = -1;
 					state = 0;
 				}
-			}else if(inputString[i] == '{' && attrProcessed) {
+			}else if(inputString[i] == '{' && attrProcessed) {	// attribute contains an object
+				// get the start and end index of this object
 				var objCount = 1;
-				i++;
 				var objStart = i, objEnd;
+				i++;
 				for(;i<inputString.length; i++) {
 					if(inputString[i] == '{' && objCount > 0) {
 						objCount++;
@@ -186,10 +196,11 @@ window.onload = function() {
 				attrProcessed = false;
 				attrStart = -1;
 				state = 0;
-			}else if(inputString[i] == '[' && attrProcessed) {
+			}else if(inputString[i] == '[' && attrProcessed) {	// the attribute contains an array
+				// get the start and end index of array
 				var arrayCount = 1;
-				i++;
 				var arrayStart = i, arrayEnd;
+				i++;
 				for(; i<inputString.length; i++) {
 					if(inputString[i] == '[' && arrayCount>0) {
 						arrayCount++;
@@ -201,7 +212,8 @@ window.onload = function() {
 						break;
 					}
 				}
-				var arrayObj = processArray(arrayStart, arrayEnd, inputString.substring(attrStart+1, attrEnd));
+				// get which type of array
+				var arrayObj = processArray(arrayStart+1, arrayEnd, inputString.substring(attrStart+1, attrEnd));
 				newClass.dataMembers.push({
 					"dataType": "ArrayList<"+arrayObj+">",
 					"name": inputString.substring(attrStart+1, attrEnd)
@@ -225,6 +237,7 @@ window.onload = function() {
  	};
 
  	processArray = function(start, end, attrName) {
+ 		// processes the array and return the type of objects it contains
  		var i;
  		if(start == end)
  			return 'Object';
@@ -232,7 +245,8 @@ window.onload = function() {
  			if(inputString[i] == '"') {
  				return "String";
  			}else if(inputString[i] == '{') {
- 				var objStart = ++i, objCount = 1, objEnd;
+ 				// discovered an object, get start and end indices
+ 				var objStart = i++, objCount = 1, objEnd;
  				for(; i<=end; i++) {
  					if(inputString[i] == '{' && objCount>0)
  						objCount++;
@@ -243,7 +257,7 @@ window.onload = function() {
  						break;
  					}
  				}
- 				makeClass(objStart, objEnd, attrName[0].toUpperCase() + attrName.substring(1));
+ 				makeClass(objStart+1, objEnd, attrName[0].toUpperCase() + attrName.substring(1));
  				return attrName[0].toUpperCase() + attrName.substring(1);
  			}else if(!isNaN(inputString[i]) && $.inArray(inputString[i], keywords) == -1) {
  				for(var j = i; j<=end; j++) {
